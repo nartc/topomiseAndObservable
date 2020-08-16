@@ -63,10 +63,6 @@ export class HomeComponent implements OnInit {
     return itemForm;
   }
 
-  async validUser() {
-
-  }
-
   async formSubmit() {
     if (this.myForm.invalid) {
       return;
