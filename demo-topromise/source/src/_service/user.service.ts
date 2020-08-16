@@ -8,9 +8,9 @@ export class UserService {
 
   constructor() { }
 
-  public getUserCurrent() {
-    //Lay user hien tai
-    return of({ id: 1, userName: 'admin', role: 'Manager' });
+  public getUserCurrent(fakeUser: {id: number, username: string, role: string}) {
+    // Lay user hien tai
+    return of(fakeUser);
   }
 
   public checkOnline(code: string) {

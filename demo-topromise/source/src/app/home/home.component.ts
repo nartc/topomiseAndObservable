@@ -1,11 +1,12 @@
 import { Component, OnInit } from '@angular/core';
-import { UserService } from 'src/_service/user.service';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { Router } from '@angular/router';
-import { WarehouseService } from 'src/_service/warehouse.service';
-import { OrderService } from 'src/_service/order.service';
-import { DialogService } from 'src/_service/dialog.service';
 import { forkJoin } from 'rxjs';
+import { filter, mapTo, takeUntil } from 'rxjs/operators';
+import { DialogService } from 'src/_service/dialog.service';
+import { OrderService } from 'src/_service/order.service';
+import { UserService } from 'src/_service/user.service';
+import { WarehouseService } from 'src/_service/warehouse.service';
 
 @Component({
   selector: 'app-home',
@@ -16,16 +17,20 @@ export class HomeComponent implements OnInit {
 
   private user: any;
   public myForm: FormGroup;
-  constructor(private userService: UserService,
+
+  constructor(
+    private userService: UserService,
     private fb: FormBuilder,
     private rt: Router,
     private warehouseService: WarehouseService,
     private orderService: OrderService,
-    private dl: DialogService) { }
+    private dl: DialogService
+  ) {
+  }
 
   async ngOnInit() {
     this.uiLoading(true);
-    this.user = await this.userService.getUserCurrent().toPromise();
+    this.user = await this.userService.getUserCurrent({ id: 1, username: 'admin', role: 'Manager' }).toPromise();
     if (this.user && this.user.role !== 'Manager') {
       this.rt.navigate(['/error-permision', 'Bạn không có quyền dùng chức năng này']);
       return;
@@ -36,7 +41,7 @@ export class HomeComponent implements OnInit {
   }
 
   uiLoading(value: boolean) {
-    //logic ui loading
+    // logic ui loading
   }
 
   createForm() {
@@ -44,12 +49,12 @@ export class HomeComponent implements OnInit {
       code: ['order-123'],
       warehouseFrom: [{ id: 1, text: 'Kho A' }],
       warehouseTo: [{ id: 2, text: 'Kho B' }],
-      assigne: [{ id: 1, name: 'Nguyễn Văn A', code: '0001' }],
+      assignee: [{ id: 1, name: 'Nguyễn Văn A', code: '0001' }],
       itemTransfer: this.fb.array([
         this.addItemTransfer({ id: 1, name: 'Sản phẩm 1', quantity: 100, unit: { id: 1, text: 'Chiếc' } }),
         this.addItemTransfer({ id: 2, name: 'Sản phẩm 2', quantity: 500, unit: { id: 2, text: 'Kiện' } })
       ])
-    })
+    });
   }
 
   addItemTransfer(value: any) {
@@ -68,17 +73,18 @@ export class HomeComponent implements OnInit {
       return;
     }
     this.uiLoading(true);
-    //valid logic
+    // valid logic
     const formValue = this.myForm.value;
-    //valid online
+    // valid online
     const checkOnline = await this.userService.checkOnline(formValue.assigne.code).toPromise();
     if (!checkOnline) {
-      const resultConfirm = await this.dl.confirm('', `${formValue.assigne.name} hôm nay không đi làm. Bạn vẫn muốn tạo phiếu cho người này chứ?`)
+      const resultConfirm = await this.dl.confirm('',
+        `${ formValue.assigne.name } hôm nay không đi làm. Bạn vẫn muốn tạo phiếu cho người này chứ?`);
       if (!resultConfirm) {
         return;
       }
     }
-    //valid quantity vs capacity
+    // valid quantity vs capacity
     const checkQuantity = this.warehouseService.checkQuantity(formValue.itemTransfer, formValue.warehouseFrom);
     const checkCapacity = this.warehouseService.checkStorageCapacity(formValue.itemTransfer, formValue.warehouseTo);
     const rsQuantityVsCapacity = await forkJoin(
@@ -98,7 +104,7 @@ export class HomeComponent implements OnInit {
     if (rs.success) {
       this.dl.alert('Tạo đơn hàng thành công');
       //close
-    }else{
+    } else {
       //bind error
     }
 
